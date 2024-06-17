@@ -93,7 +93,6 @@ const textBounceOut2 = [
 let counter = 0;
 const animationLoop = () => {
   if (counter == 0) {
-    
     title.classList.add("activated");
     title.classList.remove("deactivated");
     console.log(title);
@@ -137,9 +136,8 @@ const animationLoop = () => {
     animation.startTime = snapshot + i * 100;
     //if last letter, listen for finishing event
     if (i == textHTML.children.length - 1) {
-      animation.addEventListener("finish", () => {
-        //animate out loop
-
+      animation.addEventListener("finish", async () => {
+        await sleep(speedSeconds * 1000);
         //animate image in
         imgHTML.animate(imageBounce, {
           duration: 2000,
@@ -148,8 +146,7 @@ const animationLoop = () => {
           direction: "reverse",
           fill: "forwards",
         });
-
-        snapshot = document.timeline.currentTime + speedSeconds * 1000;
+        snapshot = document.timeline.currentTime;
         for (let j = 0; j < textHTML.children.length; j++) {
           const _letter = textHTML.children[j];
           const _animation = _letter.animate(j % 2 == 0 ? textBounceOut : textBounceOut2, {
