@@ -18,31 +18,37 @@ export class TwitchAPIService {
     this.token = readCookie("user-token");
     //if there is no token, run get token flow
     if (this.token == (null || undefined)) {
-      const params = new URLSearchParams(window.location.search);
-      //check if redirected already
-      if (params.has("token")) {
+      const hash = document.location.hash.substring(1) ?? null;
+      if (hash) {
+        const parsedHash = new URLSearchParams(hash);
+        const parsedToken = parsedHash.get("access_token");
         //save to cookie and token
-        document.cookie = "user-token=" + params.get("token");
-        this.token = params.get("token");
-      } else {
-        //save current location
-        const redirectLocation = window.location.href.replace("index.html", "");
-
-        //scopes is space delimited, and needs html encode
-        const scopes = "moderator:read:followers";
-        const scopesHTML = encodeURIComponent(scopes);
-
-        //build url
-        const url = `https://twitch-token-middleware.vertigodigital.se/index.html?app=${appID}&redirect=${redirectLocation}&scope=${scopesHTML}`;
-        window.location.href = url;
+        document.cookie = "user-token=" + parsedToken;
+        this.token = parsedToken;
       }
+
+      //scopes is space delimited, and needs html encode
+      const scopes = "moderator:read:followers";
+
+      const paramsObj = {
+        client_id: appID,
+        response_type: "token",
+        redirect_uri:
+          "https://local.vertigodigital.net:4390/widgets/obs-followers-app",
+        scope: scopes,
+      };
+      const params = new URLSearchParams(paramsObj);
+      window.location.href =
+        "https://id.twitch.tv/oauth2/authorize?" + params.toString();
     }
   };
 
   getBroadcasterID = async () => {
     //construct url
     const url = "https://api.twitch.tv/helix/users";
-    const headers = { headers: { Authorization: "Bearer " + this.token, "Client-Id": appID } };
+    const headers = {
+      headers: { Authorization: "Bearer " + this.token, "Client-Id": appID },
+    };
 
     // request endpoint
     const res = await fetch(url, headers);
@@ -57,7 +63,8 @@ export class TwitchAPIService {
   getFollowersAsync = async () => {
     //construct url
     const url =
-      "https://api.twitch.tv/helix/channels/followers?broadcaster_id=" + this.broadCasterID;
+      "https://api.twitch.tv/helix/channels/followers?broadcaster_id=" +
+      this.broadCasterID;
 
     // request endpoint
     const res = await fetch(url, {
